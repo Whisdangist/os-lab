@@ -1,0 +1,7 @@
+Image
+System.map
+boot/bootsect
+boot/setup
+kernel/chr_drv/keyboard.s
+tools/build
+tools/system
