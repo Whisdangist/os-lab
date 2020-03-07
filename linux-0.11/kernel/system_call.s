@@ -51,6 +51,9 @@ priority = 8
 signal	= 12
 sigaction = 16		# MUST be 16 (=len of sigaction)
 blocked = (33*16)
+kernel_stack = (33*16+4)
+
+ESP0 = 4
 
 # offsets within sigaction
 sa_handler = 0
@@ -67,6 +70,7 @@ nr_system_calls = 74
 .globl system_call,sys_fork,timer_interrupt,sys_execve
 .globl hd_interrupt,floppy_interrupt,parallel_interrupt
 .globl device_not_available, coprocessor_error
+.globl switch_to, first_return_from_kernel
 
 .align 2
 bad_sys_call:
@@ -282,4 +286,50 @@ parallel_interrupt:
 	movb $0x20,%al
 	outb %al,$0x20
 	popl %eax
+	iret
+
+switch_to:
+    pushl %ebp
+    movl %esp,%ebp
+    pushl %ecx
+    pushl %ebx
+    pushl %eax
+    movl 8(%ebp),%ebx
+    cmpl %ebx,current
+    je 1f
+# 切换PCB
+	movl %ebx,%eax
+	xchgl %eax,current
+# TSS中的内核栈指针的重写
+    movl tss,%ecx
+	addl $4096,%ebx
+	movl %ebx,ESP0(%ecx)
+# 切换内核栈
+    movl %esp,kernel_stack(%eax)
+	movl 8(%ebp),%ebx
+	movl kernel_stack(%ebx),%esp
+# 切换LDT
+	movl 12(%ebp),%ecx
+	lldt %cx
+    movl $0x17,%ecx
+    mov %cx,%fs
+# 和后面的 clts 配合来处理协处理器，由于和主题关系不大，此处不做论述
+    cmpl %eax,last_task_used_math 
+    jne 1f
+    clts
+
+1:    popl %eax
+    popl %ebx
+    popl %ecx
+    popl %ebp
+	ret
+
+first_return_from_kernel:
+	popl %edx
+	popl %edi
+	popl %esi
+	pop %gs
+	pop %fs
+	pop %es
+	pop %ds
 	iret
