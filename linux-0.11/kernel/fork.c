@@ -78,6 +78,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	p = (struct task_struct *) get_free_page();
 	if (!p)
 		return -EAGAIN;
+	fprintk(3, "%ld\t%c\t%ld\n", last_pid, 'N', jiffies);
 	task[nr] = p;
 	*p = *current;	/* NOTE! this doesn't copy the supervisor stack */
 	p->state = TASK_UNINTERRUPTIBLE;
@@ -130,6 +131,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	set_tss_desc(gdt+(nr<<1)+FIRST_TSS_ENTRY,&(p->tss));
 	set_ldt_desc(gdt+(nr<<1)+FIRST_LDT_ENTRY,&(p->ldt));
 	p->state = TASK_RUNNING;	/* do this last, just in case */
+	fprintk(3, "%ld\t%c\t%ld\n", last_pid, 'J', jiffies);
 	return last_pid;
 }
 
