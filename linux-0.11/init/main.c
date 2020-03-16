@@ -47,6 +47,7 @@ extern void blk_dev_init(void);
 extern void chr_dev_init(void);
 extern void hd_init(void);
 extern void floppy_init(void);
+extern void sem_init(void);
 extern void mem_init(long start, long end);
 extern long rd_init(long mem_start, int length);
 extern long kernel_mktime(struct tm * tm);
@@ -133,6 +134,7 @@ void main(void)		/* This really IS void, no error here. */
 	buffer_init(buffer_memory_end);
 	hd_init();
 	floppy_init();
+	sem_init();
 	sti();
 	move_to_user_mode();
 	if (!fork()) {		/* we count on this going ok */
