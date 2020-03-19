@@ -31,20 +31,35 @@ void sem_init() {
 }
 
 int sys_sem_open(const char *name, unsigned int value) {
-    int i, j;
-    for (i = 0; i < SEM_POOL_SIZE; i++) {
-        if (!sem_pool[i].is_using) {
-            sem_t* ret = &sem_pool[i];
-            ret->is_using = 1;
-            ret->value = value;
+    int i, j, k, f;
+    for (i = 0, k = -1; i < SEM_POOL_SIZE; i++) {
+        if (sem_pool[i].is_using) {
+            f = 0;
             for (j = 0; j < MAX_NAME_LENGTH; j++) {
-                ret->name[j] = get_fs_byte(name+j);
-                if (!ret->name[j]) break;
+                if (sem_pool[i].name[j] != get_fs_byte(name+j)) break;
+                if (!sem_pool[i].name[j]) {
+                    f = 1;
+                    break;
+                }
             }
-            return i;
+            if (f) {
+                return i;
+            }
+        }
+        else {
+            k = i;
         }
     }
-    return -1;
+
+    if (k == -1) return -1;
+    sem_t* ret = &sem_pool[k];
+    ret->is_using = 1;
+    ret->value = value;
+    for (j = 0; j < MAX_NAME_LENGTH; j++) {
+        ret->name[j] = get_fs_byte(name+j);
+        if (!ret->name[j]) break;
+    }
+    return k;
 }
 
 int sys_sem_wait(int sem_i) {
