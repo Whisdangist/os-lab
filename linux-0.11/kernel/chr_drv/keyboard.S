@@ -14,6 +14,7 @@
 
 .text
 .globl keyboard_interrupt
+.globl f12_flag
 
 /*
  * these are for the keyboard read functions
@@ -28,6 +29,7 @@ buf = 16
 mode:	.byte 0		/* caps, alt, ctrl and shift mode */
 leds:	.byte 2		/* num-lock, caps, scroll-lock mode (nom-lock on) */
 e0:	.byte 0
+f12_flag:	.byte 0
 
 /*
  *  con_int is the real interrupt routine that reads the
@@ -224,6 +226,8 @@ func:
 	jb end_func
 	cmpb $11,%al
 	ja end_func
+	jne ok_func
+	xor $1,f12_flag
 ok_func:
 	cmpl $4,%ecx		/* check that there is enough room */
 	jl end_func

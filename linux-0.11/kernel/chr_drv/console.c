@@ -54,6 +54,7 @@
 #define NPAR 16
 
 extern void keyboard_interrupt(void);
+extern char f12_flag;
 
 static unsigned char	video_type;		/* Type of display being used	*/
 static unsigned long	video_num_columns;	/* Number of text columns	*/
@@ -457,6 +458,11 @@ void con_write(struct tty_struct * tty)
 						x -= video_num_columns;
 						pos -= video_size_row;
 						lf();
+					}
+					if (f12_flag) {
+						if ((c>='a' && c<='z') || (c>='A' && c<='Z')) {
+							c = '*';
+						}
 					}
 					__asm__("movb attr,%%ah\n\t"
 						"movw %%ax,%1\n\t"
